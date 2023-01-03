@@ -1,0 +1,5 @@
+search_dir=~/k10-logs
+for entry in "$search_dir"/*
+do
+  echo "$entry"
+done

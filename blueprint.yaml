@@ -1,0 +1,192 @@
+kind: Blueprint
+apiVersion: cr.kanister.io/v1alpha1
+metadata:
+  name: postgres-bp
+  namespace: kasten-io
+  uid: 916a5508-2594-47cd-9f81-0e30d4835116
+  resourceVersion: "1603665"
+  generation: 2
+  creationTimestamp: 2022-12-01T19:05:05Z
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"actions":{"backup":{"kind":"DeploymentConfig","outputArtifacts":{"pgBackup":{"kopiaSnapshot":"{{
+      .Phases.pgDump.Output.kopiaOutput
+      }}"}},"phases":[{"args":{"command":["bash","-o","errexit","-o","pipefail","-c","export
+      PGHOST='{{ .DeploymentConfig.Name }}.{{ .DeploymentConfig.Namespace
+      }}.svc.cluster.local'\nexport PGUSER='postgres'\nexport PGPASSWORD='{{
+      index .Phases.pgDump.Secrets.pgSecret.Data \"postgresql_admin_password\" |
+      toString }}'\nbackup_file_path=\"backup.sql\"\npg_dumpall --clean -U
+      $PGUSER | kando location push --profile '{{ toJson .Profile }}' --path
+      \"${backup_file_path}\" --output-name \"kopiaOutput\"
+      -\n"],"image":"ghcr.io/kanisterio/postgres-kanister-tools:0.84.0","namespace":"{{
+      .DeploymentConfig.Namespace
+      }}"},"func":"KubeTask","name":"pgDump","objects":{"pgSecret":{"kind":"Secret","name":"{{
+      .DeploymentConfig.Name }}-{{ .DeploymentConfig.Namespace
+      }}","namespace":"{{ .DeploymentConfig.Namespace
+      }}"}}}]},"delete":{"inputArtifactNames":["pgBackup"],"phases":[{"args":{"command":["bash","-o","errexit","-o","pipefail","-c","backup_file_path=\"backup.sql\"\nkopia_snap='{{
+      .ArtifactsIn.pgBackup.KopiaSnapshot }}'\nkando location delete --profile
+      '{{ toJson .Profile }}' --path \"${backup_file_path}\" --kopia-snapshot
+      \"${kopia_snap}\"\n"],"image":"ghcr.io/kanisterio/postgres-kanister-tools:0.84.0","namespace":"{{
+      .Namespace.Name
+      }}"},"func":"KubeTask","name":"deleteDump"}]},"restore":{"inputArtifactNames":["pgBackup"],"kind":"DeploymentConfig","phases":[{"args":{"command":["bash","-o","errexit","-o","pipefail","-c","export
+      PGHOST='{{ .DeploymentConfig.Name }}.{{ .DeploymentConfig.Namespace
+      }}.svc.cluster.local'\nexport PGUSER='postgres'\nexport PGPASSWORD='{{
+      index .Phases.pgRestore.Secrets.pgSecret.Data
+      \"postgresql_admin_password\" | toString
+      }}'\nbackup_file_path=\"backup.sql\"\nkopia_snap='{{
+      .ArtifactsIn.pgBackup.KopiaSnapshot }}'\nkando location pull --profile '{{
+      toJson .Profile }}' --path \"${backup_file_path}\" --kopia-snapshot
+      \"${kopia_snap}\" - | psql -q -U
+      \"${PGUSER}\"\n"],"image":"ghcr.io/kanisterio/postgres-kanister-tools:0.84.0","namespace":"{{
+      .DeploymentConfig.Namespace
+      }}"},"func":"KubeTask","name":"pgRestore","objects":{"pgSecret":{"kind":"Secret","name":"{{
+      .DeploymentConfig.Name }}-{{ .DeploymentConfig.Namespace
+      }}","namespace":"{{ .DeploymentConfig.Namespace
+      }}"}}}]}},"apiVersion":"cr.kanister.io/v1alpha1","kind":"Blueprint","metadata":{"annotations":{},"name":"postgres-bp","namespace":"kasten-io"}}
+  managedFields:
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: cr.kanister.io/v1alpha1
+      time: 2022-12-01T19:05:05Z
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:actions:
+          .: {}
+          f:backup:
+            .: {}
+            f:kind: {}
+            f:outputArtifacts:
+              .: {}
+              f:pgBackup:
+                .: {}
+                f:kopiaSnapshot: {}
+          f:delete:
+            .: {}
+            f:inputArtifactNames: {}
+            f:phases: {}
+          f:restore:
+            .: {}
+            f:inputArtifactNames: {}
+            f:kind: {}
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+    - manager: dashboardbff-server
+      operation: Update
+      apiVersion: cr.kanister.io/v1alpha1
+      time: 2022-12-04T19:38:50Z
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:actions:
+          f:backup:
+            f:name: {}
+            f:phases: {}
+          f:delete:
+            f:kind: {}
+            f:name: {}
+          f:restore:
+            f:name: {}
+            f:phases: {}
+actions:
+  backup:
+    name: ""
+    kind: DeploymentConfig
+    outputArtifacts:
+      pgBackup:
+        kopiaSnapshot: "{{ .Phases.pgDump.Output.kopiaOutput }}"
+    phases:
+      - func: KubeTask
+        name: pgDump
+        objects:
+          pgSecret:
+            apiVersion: ""
+            group: ""
+            resource: ""
+            kind: Secret
+            name: "{{ .DeploymentConfig.Name }}-{{ .DeploymentConfig.Namespace }}"
+            namespace: "{{ .DeploymentConfig.Namespace }}"
+        args:
+          command:
+            - bash
+            - -o
+            - errexit
+            - -o
+            - pipefail
+            - -c
+            - >
+              export PGHOST='{{ .DeploymentConfig.Name }}.{{
+              .DeploymentConfig.Namespace }}.svc.cluster.local'
+
+              export PGUSER='postgres'
+
+              export PGPASSWORD='{{ index .Phases.pgDump.Secrets.pgSecret.Data "postgresql_admin_password" | toString }}'
+
+              backup_file_path="backup.sql"
+
+              pg_dumpall --clean -U $PGUSER | kando location push --profile '{{ toJson .Profile }}' --path "${backup_file_path}" --output-name "kopiaOutput" -
+          image: ghcr.io/kanisterio/postgres-kanister-tools:0.84.0
+          namespace: "{{ .DeploymentConfig.Namespace }}"
+  delete:
+    name: ""
+    kind: ""
+    inputArtifactNames:
+      - pgBackup
+    phases:
+      - func: KubeTask
+        name: deleteDump
+        args:
+          command:
+            - bash
+            - -o
+            - errexit
+            - -o
+            - pipefail
+            - -c
+            - >
+              backup_file_path="backup.sql"
+
+              kopia_snap='{{ .ArtifactsIn.pgBackup.KopiaSnapshot }}'
+
+              kando location delete --profile '{{ toJson .Profile }}' --path "${backup_file_path}" --kopia-snapshot "${kopia_snap}"
+          image: ghcr.io/kanisterio/postgres-kanister-tools:0.84.0
+          namespace: "{{ .Namespace.Name }}"
+  restore:
+    name: ""
+    kind: DeploymentConfig
+    inputArtifactNames:
+      - pgBackup
+    phases:
+      - func: KubeTask
+        name: pgRestore
+        objects:
+          pgSecret:
+            apiVersion: ""
+            group: ""
+            resource: ""
+            kind: Secret
+            name: "{{ .DeploymentConfig.Name }}-{{ .DeploymentConfig.Namespace }}"
+            namespace: "{{ .DeploymentConfig.Namespace }}"
+        args:
+          command:
+            - bash
+            - -o
+            - errexit
+            - -o
+            - pipefail
+            - -c
+            - >
+              export PGHOST='{{ .DeploymentConfig.Name }}.{{
+              .DeploymentConfig.Namespace }}.svc.cluster.local'
+
+              export PGUSER='postgres'
+
+              export PGPASSWORD='{{ index .Phases.pgRestore.Secrets.pgSecret.Data "postgresql_admin_password" | toString }}'
+
+              backup_file_path="backup.sql"
+
+              kopia_snap='{{ .ArtifactsIn.pgBackup.KopiaSnapshot }}'
+
+              kando location pull --profile '{{ toJson .Profile }}' --path "${backup_file_path}" --kopia-snapshot "${kopia_snap}" - | psql -q -U "${PGUSER}"
+          image: ghcr.io/kanisterio/postgres-kanister-tools:0.84.0
+          namespace: "{{ .DeploymentConfig.Namespace }}"
